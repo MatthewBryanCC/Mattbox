@@ -2,7 +2,7 @@ const ServerEvents = require('./js/ServerEvents.js');
 const GameEvents = require('./js/GameEvents.js');
 const LobbyManager = require('./js/LobbyManager.js');
 const {ServerClient, Player} = require('./js/Player.js');
-
+const Lobby = require('./js/Lobby.js');
 //Server Variables
 var serverReference;
 var lManager = new LobbyManager();
