@@ -18,17 +18,33 @@ class Player extends ServerClient {
         this.socketReference = socket;
         this.lobbyId = null;
     }
-    GetSocket() { // Returns the socket assigned to this player. [return: Socket]
+    /**
+     * Returns the socket assigned to this player.
+     * @returns {Socket}
+     */
+    GetSocket() {
         return this.socketReference;
     }
-    GetPlayerLobby() { // Returns the lobby the player is in if it exists. [return: Lobby]
+    /**
+     * Returns the lobby the player is in if it exists.
+     * @returns {Lobby}
+     */
+    GetPlayerLobby() {
         return lobbyManager.GetLobby(this.lobbyId);
     }
-    IsVIP() { // Returns if the player is a vip or not. [return: bool]
+    /**
+     * Returns if the player is a vip or not.
+     * @returns {bool}
+     */
+    IsVIP() {
         if(this.lobbyId == null) { return false; }
         return (this.GetPlayerLobby().vipPlayerId == this.id)
     }
-    LeaveLobby() { //Makes the player leave their current lobby. Bool returns successful leaving. [return: bool]
+    /**
+     * Makes the player leave their current lobby. Bool returns successful leaving.
+     * @returns {bool}
+     */
+    LeaveLobby() {
         let lobby = this.GetPlayerLobby();
         if(lobby == null) { return false; }
         return lobby.RemovePlayer(this);

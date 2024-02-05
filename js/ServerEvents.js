@@ -1,8 +1,14 @@
-let Lobby = require('./Lobby.js');
+const { Socket } = require("socket.io");
+
 let debugMode = true;
 ServerEvents = {}
 
-ServerEvents.AssignClientType = function(data) { //Assigns the clients user type. Either the game, or mobile / desktop user. [return: none]
+/**
+ * Assigns the clients user type. Either the game, or mobile / desktop user.
+ * @data ClientType
+ * @param {Object} data 
+ */
+ServerEvents.AssignClientType = function(data) { // [return: none]
     let socket = this;
     let clientType = data.toString();
     if(debugMode) { 
@@ -11,9 +17,12 @@ ServerEvents.AssignClientType = function(data) { //Assigns the clients user type
     CLIENT_LIST[socket.id].AssignClientType(clientType);
     socket.emit("assignClientType_Response", clientType);
 }
-
-ServerEvents.CreateNewLobby = function(data) { // Creates a new lobby and adds it to the lobby manager. [return: bool]
-    //Data requirements = { lobbyName: [string], password?: [string] };
+/**
+ * Creates a new lobby and adds it to the lobby manager. 
+ * @data { lobbyName: [string], password?: [string] }
+ * @param {Object} data 
+ */
+ServerEvents.CreateNewLobby = function(data) {;
     //Todo: make new lobby class
     let socket = this;
     let name = data.lobbyName;
@@ -22,15 +31,16 @@ ServerEvents.CreateNewLobby = function(data) { // Creates a new lobby and adds i
     newLobby.AssignGameClient(socket);
     if(newLobby == false) {
         socket.emit("createNewLobby_Response", 'failed');
-        return false;
     } else {
         socket.emit("createNewLobby_Response", 'success');
-        return true;
     }
 }
-
-ServerEvents.TryJoinLobby = function(data) { //Tries to join a lobby, will succeed given - the lobby exists, has that password and isn't full.
-    //Data requirements = { lobbyId: [string], password?: [string], playerNick: [string] };
+/**
+ * Tries to join a lobby, will succeed given - the lobby exists, has that password and isn't full.
+ * @data { lobbyId: [string], password?: [string], playerNick: [string] }
+ * @param {Object} data 
+ */
+ServerEvents.TryJoinLobby = function(data) {
     let socket = this;
     let lobbyId = data.lobbyId;
     let password = data.password || "";
@@ -45,15 +55,21 @@ ServerEvents.TryJoinLobby = function(data) { //Tries to join a lobby, will succe
     if(!successfullyJoined) { ServerEvents.FailJoin(socket); return; }
     ServerEvents.SucceedJoin(socket);
 }
-
-ServerEvents.SucceedJoin = function(socket) { //Tells the client they connected successfully.
+/**
+ * Tells the client they connected successfully.
+ * @param {Socket} socket 
+ */
+ServerEvents.SucceedJoin = function(socket) {
     //Todo: Send succeed message.
     if(debugMode) {
         console.log("[Server Event]: Player '" + socket.id + "' successfully joined a lobby!");
     }
 }
-
-ServerEvents.FailJoin = function(socket) { // Tells the client they failed to connect.
+/**
+ * Tells the client they failed to connect.
+ * @param {Socket} socket 
+ */
+ServerEvents.FailJoin = function(socket) {
     //Todo: Send fail message.
     if(debugMode) {
         console.log("[Server Event]: Player '" + socket.id + "' failed joined a lobby!");
