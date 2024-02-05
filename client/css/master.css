@@ -1,0 +1,15 @@
+body {
+    background-image: url('/client/image/background.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#joinContainer {
+    color: white;
+    background-color: red;
+    width: 30vw;
+    height: 40vh;
+    margin: auto;
+    vertical-align: middle;
+    text-align: center;
+}

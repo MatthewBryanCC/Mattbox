@@ -1,0 +1,26 @@
+{
+  "name": "mattbox",
+  "version": "1.0.0",
+  "description": "A Jackbox style game for playing minigames with others.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatthewBryanCC/Mattbox.git"
+  },
+  "keywords": [
+    "jackbox"
+  ],
+  "author": "Matthew Bryan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MatthewBryanCC/Mattbox/issues"
+  },
+  "homepage": "https://github.com/MatthewBryanCC/Mattbox#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4"
+  }
+}
