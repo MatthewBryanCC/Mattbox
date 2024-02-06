@@ -8,15 +8,23 @@ class ServerClient {
         this.clientType = clientType;
         if(this.debugMode) { console.log("[Server Client]: Successfully assigned client type '" + RClientType[clientType] + "'."); }
     }
+    GetClientType() {
+        return this.clientType;
+    }
+    IsGameClient() { 
+        return (this.clientType == ClientType.GAME);
+    }
 }
 
 class Player extends ServerClient {
-    constructor(socket) {
+    constructor(socket, ctx) {
         super(socket);
         this.nick = "";
         this.id = socket.id;
         this.socketReference = socket;
         this.lobbyId = null;
+        this.serverReference = ctx;
+        this.debugMode = true;
     }
     /**
      * Returns the socket assigned to this player.
@@ -30,7 +38,31 @@ class Player extends ServerClient {
      * @returns {Lobby}
      */
     GetPlayerLobby() {
-        return lobbyManager.GetLobby(this.lobbyId);
+        if(!this.IsInLobby()) { return null; }
+        return this.serverReference.lManager.FindLobby(this.lobbyId);
+    }
+    /**
+     * Returns if the player is currently in a lobby.
+     * @returns {bool}
+     */
+    IsInLobby() {
+        return (this.lobbyId != null);
+    }
+    /**
+     * Returns true if the player is the game client owner of the lobby they're in.
+     * @returns {bool}
+     */
+    IsLobbyGameClient() {
+        if(!this.IsInLobby()) { return false; }
+        if(this.clientType == ClientType.GAME) {
+            let lobby = this.GetPlayerLobby();
+            if(lobby != null) {
+                if(lobby.ownerClientId == this.id) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     /**
      * Returns if the player is a vip or not.
@@ -40,13 +72,19 @@ class Player extends ServerClient {
         if(this.lobbyId == null) { return false; }
         return (this.GetPlayerLobby().vipPlayerId == this.id)
     }
+    SetLobbyId(id) {
+        this.lobbyId = id;
+    }
     /**
      * Makes the player leave their current lobby. Bool returns successful leaving.
      * @returns {bool}
      */
     LeaveLobby() {
+        if(this.debugMode) { console.log("[Server Client]: User '" + this.id + "' trying to leave lobby..."); }
+
         let lobby = this.GetPlayerLobby();
         if(lobby == null) { return false; }
+        this.lobbyId = null;
         return lobby.RemovePlayer(this);
     }
 }

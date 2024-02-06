@@ -19,21 +19,30 @@ ServerEvents.AssignClientType = function(data) { // [return: none]
 }
 /**
  * Creates a new lobby and adds it to the lobby manager. 
- * @data { lobbyName: [string], password?: [string] }
+ * @data { password?: [string] }
  * @param {Object} data 
  */
-ServerEvents.CreateNewLobby = function(data) {;
-    //Todo: make new lobby class
-    let socket = this;
-    let name = data.lobbyName;
+ServerEvents.CreateNewLobby = function(data) {
+    let socket = this.socket;
+    let ctx = this.ctx;
     let password = data.password || "";
-    let newLobby = lManager.CreateNewLobby(name, password);
+    let newLobby = ctx.lManager.CreateNewLobby(socket.id, password, ctx);
     newLobby.AssignGameClient(socket);
     if(newLobby == false) {
-        socket.emit("createNewLobby_Response", 'failed');
+        console.log("[Server Events]: Replying with failure response to 'CreateNewLobby'");
+        socket.emit("createNewLobby_Response", {result: "false", lobbyShortId: ""});
     } else {
-        socket.emit("createNewLobby_Response", 'success');
+        console.log("[Server Events]: Replying with succesful response to 'CreateNewLobby'");
+        socket.emit("createNewLobby_Response", {result: "true", lobbyShortId: newLobby.shortId.toString()});
     }
+}
+/**
+ * Changes the lobby game type to the supplied id.
+ * @data Todo: {}
+ * @param {Object} data 
+ */
+ServerEvents.ChooseGameType = function(data) {
+
 }
 /**
  * Tries to join a lobby, will succeed given - the lobby exists, has that password and isn't full.
@@ -75,5 +84,6 @@ ServerEvents.FailJoin = function(socket) {
         console.log("[Server Event]: Player '" + socket.id + "' failed joined a lobby!");
     }
 }
+
 
 module.exports = ServerEvents;

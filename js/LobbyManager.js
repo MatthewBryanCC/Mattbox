@@ -1,6 +1,8 @@
+let Lobby = require('./Lobby');
 class LobbyManager {
     constructor() {
         this.Lobbies = []
+        this.debugMode = true;
     }
     /**
      * Finds a lobby with a given id.
@@ -15,12 +17,17 @@ class LobbyManager {
      * Creates a new lobby if valid, and adds it to the list.
      * @param {string} name 
      * @param {string} password 
+     * @param {Server} ctx
      * @returns {Lobby}
      */
-    CreateNewLobby(name, password) { // [return: Lobby || false]
-        if(name == "" || name == null) { return false; }
-        let newLobby = new Lobby(name, password);
+    CreateNewLobby(ownerId, password, ctx) { // [return: Lobby || false]
+        let newLobby = new Lobby(ownerId, password, ctx);
         this.Lobbies[newLobby.id] = newLobby;
+        //Assign this client to that lobby.
+        let playerClient = CLIENT_LIST[ownerId];
+        playerClient.SetLobbyId(newLobby.id);
+
+        if(this.debugMode) { console.log("[Lobby Manager]: Created and added new lobby! " + this.Lobbies + ", and owner id is " + newLobby.ownerClientId); }
         return newLobby;
     }
     /**
@@ -42,13 +49,6 @@ class LobbyManager {
         if(user == null) { return false; }
         return user.LeaveLobby();
     }
-    /**
-     * Returns a Lobby type object from Lobbies, relating to the id.
-     * @param {string} id 
-     * @returns {Array<Lobby>}
-     */
-    GetLobby(id) {
-        return this.Lobbies[id];
-    }
+
 }
 module.exports = LobbyManager;

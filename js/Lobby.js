@@ -1,15 +1,20 @@
 const LobbyManager = require("./LobbyManager");
-
+class GameType {
+    "FNF" = 0
+}
 class Lobby {
     /* Class for holding information about existing game lobbies (players, gametype, state etc...) */    
-    constructor(name, password) {
+    constructor(ownerId, password, ctx) {
         this.gameClient = null;
-        this.displayName = name;
         this.password = password;
         this.playerList = [];
         this.id = CreateUUID("LOBBY");
+        this.shortId = CreateShortUUID();
         this.vipPlayerId = null;
+        this.ownerClientId = ownerId;
+        this.game = null; //Todo: Create game class.
         this.maxSize = 8;
+        this.serverReference = ctx;
     }
     /**
      * 
@@ -25,6 +30,7 @@ class Lobby {
         }
         if(this.PlayerCount() < this.maxSize) {
             this.playerList[player.id] = player;
+            player.lobbyId = this.id;
             return true; 
         } else { return false; }
     }
@@ -90,7 +96,19 @@ class Lobby {
      * Lobby unalives itself.
      */
     DestroyLobby() {
-        lobbyManager.DeleteLobby(this.id);
+        this.BroadcastDestroyLobby();
+        this.serverReference.lManager.DeleteLobby(this.id);
+    }
+    /**
+     * Emits a lobby_deleted event to all connected player clients.
+     */
+    BroadcastDestroyLobby() {
+        console.log("[Lobby]: Broadcasting close event.");
+        this.playerList.forEach(client => {
+            if(client.clientType == ClientType.PLAYER) {
+                client.socketReference.emit("lobby_deleted");
+            }
+        });
     }
     /**
      * Returns the amount of players in the lobby.
@@ -98,6 +116,21 @@ class Lobby {
      */
     PlayerCount() {
         return this.playerList.length;
+    }
+    /**
+     * Starts the game if the game type has be chosen and there's enough players.
+     * @returns {bool}
+     */
+    StartGame() {
+        //Todo: start the game via the Game class.
+        return false;
+    }
+    /**
+     * 
+     * @param {GameType} gameType 
+     */
+    ChooseGame(gameType) {
+        if(gameType == GameType.FNF) { console.log("yup"); }
     }
 }
 
@@ -115,5 +148,27 @@ function PackPlayers() {
     });
     return data;
 }
-
+function CreateUUID(type) {
+    function uuid(mask = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx') {
+        return `${mask}`.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    }
+    return uuid("xxxx-xxxx-xxxx-xxxx-xxxx-" + type);
+}
+/**
+ * Generates a new 5 character alphanumeric code to use to join the lobby.
+ * @returns {string}
+ */
+function CreateShortUUID() {
+    function uuid(mask = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx') {
+        return `${mask}`.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    }
+    let id = uuid("xxxx");
+    return id.toUpperCase();
+}
 module.exports = Lobby;

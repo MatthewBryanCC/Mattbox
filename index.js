@@ -43,6 +43,8 @@ class Server {
         this.serv = serv;
         this.io = null;
         this.CreateSocketIO();
+        this.lManager = lManager;
+        this.debugMode = true;
     }
 
     CreateSocketIO() {
@@ -52,7 +54,7 @@ class Server {
 
     CreateClientEvents(socket) {
         socket.on("assignClientType_Request", ServerEvents.AssignClientType.bind(socket));
-        socket.on("createNewLobby_Request", ServerEvents.CreateNewLobby.bind(socket));
+        socket.on("createNewLobby_Request", ServerEvents.CreateNewLobby.bind({socket: socket, ctx: this}));
         socket.on('disconnect', this.ClientDisconnect.bind(socket));
 
     }
@@ -60,22 +62,38 @@ class Server {
     ClientInitialConnection(socket) {
         socket.id = CreateUUID("USER");
         SOCKET_LIST[socket.id] = socket;
-        let client = new Player(socket);
+        let client = new Player(socket, this);
         CLIENT_LIST[socket.id] = client;
+
+        //Setup client events
         this.CreateClientEvents(socket);
-        console.log("[Server]: Client connected! Assigned id '" + socket.id + "'");
+        if(this.debugMode) { console.log("[Server]: Client connected! Assigned id '" + socket.id + "'"); }
         socket.emit("doInitialConnection", {id: socket.id.toString()})
     }
     
     ClientDisconnect(data) {
         let socket = this;
-        console.log("[Server]: Client '" + socket.id + "' disconnected.");
+        let player = CLIENT_LIST[socket.id];
+        if(player.IsGameClient()) {
+            if(player.IsLobbyGameClient()) {
+                //Tell all player clients that the lobby is closing.
+                player.GetPlayerLobby().BroadcastDestroyLobby();
+            }
+        } else {
+            if(player.IsInLobby()) {
+                let leftSuccessfully = player.LeaveLobby();
+                if(leftSuccessfully) {
+                    if(this.debugMode) { console.log("[Server]: Client '" + player.id + "' successfully left their lobby!"); }
+                } else {
+                    if(this.debugMode) { console.log("[Server]: Client '" + player.id + "' failed to leave their lobby!"); }
+                }
+            }
+        }
+        if(this.debugMode) { console.log("[Server]: Client '" + socket.id + "' disconnected."); }
+        delete CLIENT_LIST[socket.id];
         delete SOCKET_LIST[socket.id];
     }
 }
-
-
-
 function CreateUUID(type) {
     function uuid(mask = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx') {
         return `${mask}`.replace(/[xy]/g, function(c) {
