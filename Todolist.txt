@@ -1,0 +1,10 @@
+Todo List
+---------
+- Inform all player clients when a game client owning their lobby disconnects
+    + Implement network event 'lobbyDelete_Request' on player client (from server)
+        = BroadcastDestroyLobby() not working - find out why??
+- Show newly joind players on the game client.
+- Allow a lobby game to start
+    + Implement network event 'lobbyStartGame_Request' on server (from player client).
+    + Implement network event 'lobbyStartGame_Response' on game client (from server).
+    + Implement network event 'lobbyStartGame_Response' on player client (from server).

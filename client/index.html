@@ -4,24 +4,40 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Mattbox</title>
+        <link href="/client/css/animate.min.css" rel="stylesheet"/>
         <link href="/client/css/master.css" rel="stylesheet"/>
+        <link href="/client/css/loader.css" rel="stylesheet"/>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" ></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <!--<script defer type="module" src="/client/js/lobby.mjs"></script>-->
         <script defer type="module" src="/client/js/app.mjs"></script>
     </head>
     <body>
         <div id="wrapper">
-            <div id="joinContainer">
+            <div id="joinLobbyContainer" class="lobbyContainer animate__animated animate__fadeIn">
                 <h1> Join Room </h1>
                 <hr/>
-                <label for="username_input"> Username: </label>
-                <input id="username_input" type="text" placeholder="Username" />
-                <label for="password_input"> Password: </label>
-                <input id="password_input" type="text" placeholder="Password" />
+                <label for="usernameInput"> Username: </label><br/>
+                <input id="usernameInput" type="text" placeholder="Username" /><br/>
+                <label id="usernameErrorLabel" class="errorLabel">A username is required!</label><br/>
+                <label for="roomidInput"> Room ID: </label><br/>
+                <input id="roomidInput" type="text" placeholder="ABCD1" /><br/>
+                <label id="roomIdErrorLabel" class="errorLabel">A Room ID is required!</label><br/>
+                <button id="joinLobbyButton" type="submit">Join Lobby</button><br/>  
+                <label id="connectionErrorLabel" class="errorLabel">Failed to communicate with server :(</label><br/>
+                <label id="lobbyIdErrorLabel" class="errorLabel">No lobby was found with this ID.</label><br/>
+                <span id="lobbyMenuLoader" class="loader"></span>
+            </div>
+
+            <div id="waitMenuContainer" class="lobbyContainer animate__animated">
+                <h1> In Lobby </h1>
+                <hr/>
+                <h4> Sit tight and wait for the game to start!</h4>
+                <div id="vipContainer">
+                    <p> You're the <b>VIP</b>!</p>
+                    <button id="startGameButton" type="submit">Start Game</button>
+                </div>
             </div>
         </div>
     </body>
-    <script defer type="text/javascript">
-        //Custom code.
-    </script>
 </html>

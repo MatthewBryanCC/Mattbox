@@ -14,6 +14,23 @@ class LobbyManager {
         return this.Lobbies[id];
     }
     /**
+     * Finds a lobby with a given short code id.
+     * @param {string} id 
+     * @returns {Lobby}
+     */
+    FindLobbyByShortId(id) {
+        console.log("dafaw: " + id);
+        if(id == null) { return false; }
+        for(var lobbyId in this.Lobbies) {
+            let lobby = this.Lobbies[lobbyId];
+            if(lobby.shortId == id) {
+                return lobby;
+                break;
+            }
+        }
+        return false;
+    }
+    /**
      * Creates a new lobby if valid, and adds it to the list.
      * @param {string} name 
      * @param {string} password 
@@ -22,12 +39,11 @@ class LobbyManager {
      */
     CreateNewLobby(ownerId, password, ctx) { // [return: Lobby || false]
         let newLobby = new Lobby(ownerId, password, ctx);
-        this.Lobbies[newLobby.id] = newLobby;
+        ctx.lManager.Lobbies[newLobby.id] = newLobby;
         //Assign this client to that lobby.
         let playerClient = CLIENT_LIST[ownerId];
         playerClient.SetLobbyId(newLobby.id);
-
-        if(this.debugMode) { console.log("[Lobby Manager]: Created and added new lobby! " + this.Lobbies + ", and owner id is " + newLobby.ownerClientId); }
+        if(this.debugMode) { console.log("[Lobby Manager]: Created and added new lobby! Owner id is " + newLobby.ownerClientId); }
         return newLobby;
     }
     /**
@@ -36,7 +52,9 @@ class LobbyManager {
      * @returns {bool}
      */
     DeleteLobby(id) {
-        if(this.Lobbies[id] == null) { return false; }
+        let lobby = this.Lobbies[id];
+        if(lobby == null) { return false; }
+        lobby.BroadcastDestroyLobby();
         delete this.Lobbies[id];
         return true;
     }

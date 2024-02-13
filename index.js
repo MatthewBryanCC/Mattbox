@@ -53,9 +53,11 @@ class Server {
     }
 
     CreateClientEvents(socket) {
-        socket.on("assignClientType_Request", ServerEvents.AssignClientType.bind(socket));
-        socket.on("createNewLobby_Request", ServerEvents.CreateNewLobby.bind({socket: socket, ctx: this}));
-        socket.on('disconnect', this.ClientDisconnect.bind(socket));
+        socket.on("assignClientType_Request", ServerEvents.AssignClientType.bind({"playerSocket": socket}));
+        socket.on("createNewLobby_Request", ServerEvents.CreateNewLobby.bind({"playerSocket": socket, ctx: this}));
+        socket.on("chooseGame_Request", ServerEvents.ChooseGameType.bind({"playerSocket": socket}));
+        socket.on("tryJoinLobby_Request", ServerEvents.TryJoinLobby.bind({"playerSocket": socket, "ctx": this}));
+        socket.on('disconnect', this.ClientDisconnect.bind({"ctx": this, "playerSocket": socket}));
 
     }
 
@@ -72,24 +74,26 @@ class Server {
     }
     
     ClientDisconnect(data) {
-        let socket = this;
+        let socket = this.playerSocket;
+        let ctx = this.ctx;
         let player = CLIENT_LIST[socket.id];
-        if(player.IsGameClient()) {
-            if(player.IsLobbyGameClient()) {
-                //Tell all player clients that the lobby is closing.
-                player.GetPlayerLobby().BroadcastDestroyLobby();
-            }
+
+        if(player.IsLobbyGameClient()) {
+            //Game client / lobby host disconnecting.
+            //Tell all player clients that the lobby is closing.
+            player.GetPlayerLobby().BroadcastDestroyLobby();
         } else {
+            //Normal player disconnecting...
             if(player.IsInLobby()) {
                 let leftSuccessfully = player.LeaveLobby();
                 if(leftSuccessfully) {
-                    if(this.debugMode) { console.log("[Server]: Client '" + player.id + "' successfully left their lobby!"); }
+                    if(ctx.debugMode) { console.log("[Server]: Client '" + player.id + "' successfully left their lobby!"); }
                 } else {
-                    if(this.debugMode) { console.log("[Server]: Client '" + player.id + "' failed to leave their lobby!"); }
+                    if(ctx.debugMode) { console.log("[Server]: Client '" + player.id + "' failed to leave their lobby!"); }
                 }
             }
         }
-        if(this.debugMode) { console.log("[Server]: Client '" + socket.id + "' disconnected."); }
+        if(ctx.debugMode) { console.log("[Server]: Client '" + socket.id + "' disconnected."); }
         delete CLIENT_LIST[socket.id];
         delete SOCKET_LIST[socket.id];
     }

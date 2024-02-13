@@ -1,6 +1,6 @@
 const LobbyManager = require("./LobbyManager");
-class GameType {
-    "FNF" = 0
+var GameType = {
+    "FNF": "FNF"
 }
 class Lobby {
     /* Class for holding information about existing game lobbies (players, gametype, state etc...) */    
@@ -12,9 +12,10 @@ class Lobby {
         this.shortId = CreateShortUUID();
         this.vipPlayerId = null;
         this.ownerClientId = ownerId;
-        this.game = null; //Todo: Create game class.
+        this.game = null;
         this.maxSize = 8;
         this.serverReference = ctx;
+        this.debugMode = true;
     }
     /**
      * 
@@ -31,6 +32,10 @@ class Lobby {
         if(this.PlayerCount() < this.maxSize) {
             this.playerList[player.id] = player;
             player.lobbyId = this.id;
+            if(Object.keys(this.playerList).length == 1) {
+                //No other player to - make this one the vip.
+                this.AssignVIP(player);
+            }
             return true; 
         } else { return false; }
     }
@@ -41,16 +46,24 @@ class Lobby {
      */
     RemovePlayer(player) {
         if(this.playerList[player.id] == null) { return false; } //Couldn't find player.
+        if(player.IsVIP()) {
+            this.AssignNewVIP();
+        }
+        if(player.IsLobbyGameClient()) {
+            //Must force close lobby - game owner left.
+            this.BroadcastDestroyLobby();
+            this.DestroyLobby();
+        }
         delete this.playerList[player.id]; 
-        this.AssignNewVIPOrDelete();
+        this.ReloadGameClientUsers();
         return true;
     }
     /**
      * Used to reassign the vip player, or delete the lobby if empty.
      * @returns {bool}
      */
-    AssignNewVIPOrDelete() {
-        if(this.playerList.length < 1) { this.DestroyLobby(); return false; }
+    AssignNewVIP() {
+        if(this.playerList.length < 1) { return false; }
         let randomPlayer = this.GetRandomLobbyPlayer();
         this.vipPlayerId = randomPlayer.id;
         return true;
@@ -59,8 +72,15 @@ class Lobby {
      * Sends a message to the unity game client with all the connected clients.
      */
     ReloadGameClientUsers() {
-        let dataPacket = PackPlayers();
-        this.gameClient.emit("reloadClients", dataPacket);
+        let dataPacket = this.PackPlayers();
+        this.GetGameClientSocket().emit("reloadClients_Request", dataPacket);
+    }
+    /**
+     * Returns the client socket which belongs to the game client owner of this lobby.
+     * @returns {Socket} 
+     */
+    GetGameClientSocket() {
+        return SOCKET_LIST[this.ownerClientId];
     }
     /**
      * Returns a random player in playerList.
@@ -90,6 +110,7 @@ class Lobby {
     AssignVIP(player) {
         if(player == null) { return false; }
         this.vipPlayerId = player.id;
+        if(this.debugMode) { console.log("[Lobby]: Assigning new VIP player '" + this.vipPlayerId + "'."); }
         return true;
     }
     /**
@@ -103,10 +124,11 @@ class Lobby {
      * Emits a lobby_deleted event to all connected player clients.
      */
     BroadcastDestroyLobby() {
-        console.log("[Lobby]: Broadcasting close event.");
+        if(this.debugMode) { console.log("[Lobby]: Broadcasting close event.") };
         this.playerList.forEach(client => {
             if(client.clientType == ClientType.PLAYER) {
-                client.socketReference.emit("lobby_deleted");
+                client.LeaveLobby();
+                client.socketReference.emit("lobbyDeleted_Request"); //Todo: implement this network event
             }
         });
     }
@@ -129,25 +151,40 @@ class Lobby {
      * 
      * @param {GameType} gameType 
      */
-    ChooseGame(gameType) {
-        if(gameType == GameType.FNF) { console.log("yup"); }
+    ChooseGame(gameType, playerSocket) {
+        console.log("Choosing game; " + gameType);
+        if(gameType == GameType.FNF) { 
+            let ownerId = CLIENT_LIST[playerSocket.id].GetPlayerLobby().ownerClientId;
+            let gameClientSocket = SOCKET_LIST[ownerId];
+            if(gameClientSocket) {
+                gameClientSocket.emit("chooseGame_Response", 1);
+                console.log("Choosing game response...");
+            }
+        }
+    }
+    /**
+     * Returns whether or not a game has been assigned to this lobby.
+     * @returns {bool}
+     */
+    IsGameAssigned() { return !(this.game == null); }
+    /**
+     * Packs the lobby players into an array with relevant data.
+     * @returns {Dictionary<string, string>} data
+     */
+    PackPlayers() {
+        let data = {}
+        this.playerList.forEach(player => {
+            data[player.id] = player.nick;
+        });
+        return data;
     }
 }
 
 /**
- * Packs the lobby players into an array with relevant data.
- * @returns {Array<PackedPlayer>}
+ * Generates a random unique 20 character alphanumerical identifier.
+ * Should be unique given the ~13.3 nonillion combinations.
+ * @returns {string}
  */
-function PackPlayers() {
-    let data = []
-    this.playerList.forEach(player => {
-        data.push({
-            id: player.id,
-            nick: player.nick
-        });
-    });
-    return data;
-}
 function CreateUUID(type) {
     function uuid(mask = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx') {
         return `${mask}`.replace(/[xy]/g, function(c) {

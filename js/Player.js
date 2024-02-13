@@ -54,7 +54,7 @@ class Player extends ServerClient {
      */
     IsLobbyGameClient() {
         if(!this.IsInLobby()) { return false; }
-        if(this.clientType == ClientType.GAME) {
+        if(this.IsGameClient()) {
             let lobby = this.GetPlayerLobby();
             if(lobby != null) {
                 if(lobby.ownerClientId == this.id) {
@@ -85,6 +85,7 @@ class Player extends ServerClient {
         let lobby = this.GetPlayerLobby();
         if(lobby == null) { return false; }
         this.lobbyId = null;
+        this.nick = "";
         return lobby.RemovePlayer(this);
     }
 }
