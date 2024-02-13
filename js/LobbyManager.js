@@ -56,6 +56,8 @@ class LobbyManager {
         if(lobby == null) { return false; }
         lobby.BroadcastDestroyLobby();
         delete this.Lobbies[id];
+        console.log("[Lobby Manager]: Deleted lobby '" + id + "'.");
+        console.log("remaining lobbies: " + this.Lobbies);
         return true;
     }
     /**

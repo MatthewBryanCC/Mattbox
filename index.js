@@ -81,7 +81,7 @@ class Server {
         if(player.IsLobbyGameClient()) {
             //Game client / lobby host disconnecting.
             //Tell all player clients that the lobby is closing.
-            player.GetPlayerLobby().BroadcastDestroyLobby();
+            player.GetPlayerLobby().DestroyLobby();
         } else {
             //Normal player disconnecting...
             if(player.IsInLobby()) {

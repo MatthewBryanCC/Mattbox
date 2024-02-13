@@ -124,13 +124,16 @@ class Lobby {
      * Emits a lobby_deleted event to all connected player clients.
      */
     BroadcastDestroyLobby() {
-        if(this.debugMode) { console.log("[Lobby]: Broadcasting close event.") };
-        this.playerList.forEach(client => {
-            if(client.clientType == ClientType.PLAYER) {
+        if(this.debugMode) { console.log("[Lobby]: Broadcasting close event. " + this.playerList) };
+        for(var clientId in this.playerList) {
+            console.log(clientId);
+            var client = this.playerList[clientId];
+            if(client.clientType != ClientType.GAME) {
+                console.log("trying");
                 client.LeaveLobby();
                 client.socketReference.emit("lobbyDeleted_Request"); //Todo: implement this network event
             }
-        });
+        }
     }
     /**
      * Returns the amount of players in the lobby.
